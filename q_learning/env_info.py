@@ -25,7 +25,7 @@ env = gym.make('FrozenLakeNotSlippery-v0')
 # env = gym.make('FrozenLake-v0')
 
 
-def main_env_info():
+def env_info_details():
     #####################
     # observation space #
     #####################
@@ -58,42 +58,49 @@ def main_env_info():
     # This sets the initial state at S, our starting point
     # We can render the environment to see where we are on the 4x4 frozenlake gridworld
     observation = env.reset()
-    print(observation, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     env.render()
 
     action = 2  # RIGHT
-    observation, reward, done, info = env.step(action)
+    next_observation, reward, done, info = env.step(action)
     env.render()
 
-    # Observation = 1: move to grid number 1 (unchanged)
     # Prob = 1: deterministic policy, if we choose to go right, we'll go right
-    print("Observation: {0}, Action: {1}, Reward: {2}, Done: {3}, Info: {4}".format(
-        observation, action, reward, done, info
+    print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(
+        observation, action, next_observation, reward, done, info
     ))
 
+    observation = next_observation
+
     action = 1  # DOWN
-    observation, reward, done, info = env.step(action)
+    next_observation, reward, done, info = env.step(action)
     env.render()
 
-    # Observation = 5: move to grid number 5 (unchanged)
-    print("Observation: {0}, Action: {1}, Reward: {2}, Done: {3}, Info: {4}".format(
-        observation, action, reward, done, info
+    print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(
+        observation, action, next_observation, reward, done, info
     ))
 
     print("*" * 80)
+    print("*" * 80)
+    print("*" * 80)
+
+
+def run_env():
+    print("START RUN!!!")
     # This sets the initial state at S, our starting point
     # We can render the environment to see where we are on the 4x4 frozenlake gridworld
-    env.reset()
+    observation = env.reset()
     env.render()
 
     actions = [2, 2, 1, 1, 1, 2]
     for action in actions:
-        observation, reward, done, info = env.step(action)
+        next_observation, reward, done, info = env.step(action)
         env.render()
-        print("Observation: {0}, Action: {1}, Reward: {2}, Done: {3}, Info: {4}".format(
-            observation, action, reward, done, info
+        print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(
+            observation, action, next_observation, reward, done, info
         ))
+        observation = next_observation
 
 
 if __name__ == "__main__":
-    main_env_info()
+    env_info_details()
+    run_env()

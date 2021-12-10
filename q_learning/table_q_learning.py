@@ -34,10 +34,11 @@ env = gym.make('FrozenLakeNotSlippery-v0')
 # env = gym.make('FrozenLake-v0')
 
 
-# Q값이 모두 같을때 랜덤한 action을 구해주기 위한 함수
 def greedy_action(action_values):
     max_value = np.max(action_values)
-    return np.random.choice([action_ for action_, value_ in enumerate(action_values) if value_ == max_value])
+    return np.random.choice(
+        [action_ for action_, value_ in enumerate(action_values) if value_ == max_value]
+    )
 
 
 def epsilon_greedy_action(action_values, epsilon):
@@ -45,7 +46,9 @@ def epsilon_greedy_action(action_values, epsilon):
         return random.choice(range(len(action_values)))
     else:
         max_value = np.max(action_values)
-        return np.random.choice([action_ for action_, value_ in enumerate(action_values) if value_ == max_value])
+        return np.random.choice(
+            [action_ for action_, value_ in enumerate(action_values) if value_ == max_value]
+        )
 
 
 def q_table_learning(num_episodes=200, alpha=0.1, gamma=0.95, epsilon=0.1):
