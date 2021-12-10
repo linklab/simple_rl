@@ -60,3 +60,4 @@ class ReplayBuffer:
         dones = torch.tensor(dones, dtype=torch.bool, device=self.device)
 
         return observations, actions, next_observations, rewards, dones
+

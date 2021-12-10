@@ -1,42 +1,31 @@
-# https://www.deeplearningwizard.com/deep_learning/deep_reinforcement_learning_pytorch/dynamic_programming_frozenlake/
-# -*- coding: utf-8 -*-
-import time
-import sys
-import os
 import gym
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
-import random
-
+import torch.nn.functional as F
+import time
 import wandb
+import sys, os
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from b_dqn.cartpole_dqn.qnet import QNet
+from b_dqn.pong_dqn.cnn_qnet import AtariCNN
 from b_dqn.common import ReplayBuffer
 from b_dqn.common import Transition
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-np.set_printoptions(precision=3)
-np.set_printoptions(suppress=True)
-np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
-
-MODEL_DIR = os.path.join(PROJECT_HOME, "b_dqn", "cartpole_dqn", "models")
+MODEL_DIR = os.path.join(PROJECT_HOME, "b_dqn", "pong_dqn", "models")
 if not os.path.exists(MODEL_DIR):
     os.mkdir(MODEL_DIR)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-print(DEVICE)
 
-
-class DQN():
+class DQN:
     def __init__(
             self, env_name, env, test_env, use_wandb, wandb_entity,
             max_num_episodes, batch_size, learning_rate,
@@ -74,11 +63,12 @@ class DQN():
         self.env = env
         self.test_env = test_env
 
-        # network
-        self.q = QNet(device=DEVICE).to(DEVICE)
-        self.target_q = QNet(device=DEVICE).to(DEVICE)
-        self.target_q.load_state_dict(self.q.state_dict())
+        obs_shape = self.env.observation_space.shape
+        n_actions = self.env.action_space.n
 
+        # network
+        self.q = AtariCNN(obs_shape, n_actions, device=DEVICE).to(DEVICE)
+        self.target_q = AtariCNN(obs_shape, n_actions, device=DEVICE).to(DEVICE)
         self.optimizer = optim.Adam(self.q.parameters(), lr=self.learning_rate)
 
         # agent
@@ -103,13 +93,15 @@ class DQN():
 
         total_train_start_time = time.time()
 
-        test_episode_reward_avg = 0.0
+        test_episode_reward_avg = -21
         test_episode_reward_std = 0.0
 
         is_terminated = False
 
         for n_episode in range(self.max_num_episodes):
             epsilon = self.epsilon_scheduled(n_episode)
+
+            episode_start_time = time.time()
 
             episode_reward = 0
 
@@ -137,6 +129,9 @@ class DQN():
 
                 if done:
                     self.episode_reward_lst.append(episode_reward)
+
+                    per_episode_time = time.time() - episode_start_time
+                    per_episode_time = time.strftime('%H:%M:%S', time.gmtime(per_episode_time))
 
                     mean_episode_reward = np.mean(self.episode_reward_lst[-100:])
 
@@ -170,17 +165,18 @@ class DQN():
 
                     if (n_episode + 1) % self.print_episode_interval == 0:
                         print(
-                            "[Episode {:3}, Time Steps {:6}]".format(
+                            "[Episode {:3}, Steps {:6}]".format(
                                 n_episode + 1, self.time_steps
                             ),
                             "Episode Reward: {:>5},".format(episode_reward),
                             "Mean Episode Reward: {:.3f},".format(mean_episode_reward),
-                            "size of replay buffer: {:>6},".format(
+                            "size of replay buffer: {:>6}".format(
                                 self.replay_buffer.size()
                             ),
-                            "Loss: {:6.3f},".format(loss),
-                            "Epsilon: {:4.2f},".format(epsilon),
-                            "Num Training Steps: {:5},".format(self.training_time_steps),
+                            "Loss: {:.3f},".format(loss),
+                            "Epsilon: {:.2f},".format(epsilon),
+                            "Num Training Steps: {:4},".format(self.training_time_steps),
+                            "Per-Episode Time: {}".format(per_episode_time),
                             "Total Elapsed Time {}".format(total_training_time)
                         )
 
@@ -194,7 +190,7 @@ class DQN():
                             "Mean Episode Reward": mean_episode_reward,
                             "Episode": n_episode,
                             "Size of replay buffer": self.replay_buffer.size(),
-                            "Number of Training Steps": self.training_time_steps
+                            "Number of Training Steps": self.training_time_steps,
                         })
 
                     break
@@ -211,9 +207,9 @@ class DQN():
 
         batch = self.replay_buffer.sample(self.batch_size)
 
-        # observations.shape: torch.Size([32, 4]),
+        # observations.shape: torch.Size([32, 4, 84, 84]),
         # actions.shape: torch.Size([32, 1]),
-        # next_observations.shape: torch.Size([32, 4]),
+        # next_observations.shape: torch.Size([32, 4, 84, 84]),
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
         observations, actions, next_observations, rewards, dones = batch
@@ -245,7 +241,6 @@ class DQN():
         # print("target_state_action_values.shape: {0}".format(
         #     target_state_action_values.shape
         # ))
-        # print("loss.shape: {0}".format(loss.shape))
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -292,32 +287,44 @@ class DQN():
 
 
 def main():
-    ENV_NAME = "CartPole-v1"
+    # local
+    ENV_NAME = "PongNoFrameskip-v4"
 
+    # env
     env = gym.make(ENV_NAME)
+    env = gym.wrappers.AtariPreprocessing(
+        env, grayscale_obs=True, scale_obs=True
+    )
+    env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
+
+    # test_env
     test_env = gym.make(ENV_NAME)
+    test_env = gym.wrappers.AtariPreprocessing(
+        test_env, grayscale_obs=True, scale_obs=True
+    )
+    test_env = gym.wrappers.FrameStack(test_env, num_stack=4, lz4_compress=True)
 
     dqn = DQN(
         env_name=ENV_NAME,
         env=env,
         test_env=test_env,
-        use_wandb=False,                            # WANDB 연결 및 로깅 유무
+        use_wandb=False,                        # WANDB 연결 및 로깅 유무
         wandb_entity="link-koreatech",          # WANDB 개인 계정
         max_num_episodes=1_000,                 # 훈련을 위한 최대 에피소드 횟수
         batch_size=32,                          # 훈련시 배치에서 한번에 가져오는 랜덤 배치 사이즈
         learning_rate=0.0001,                   # 학습율
         gamma=0.99,                             # 감가율
-        target_sync_step_interval=500,          # 기존 Q 모델을 타깃 Q 모델로 동기화시키는 step 간격
-        replay_buffer_size=10_000,              # 리플레이 버퍼 사이즈
-        min_buffer_size_for_training=100,       # 훈련을 위한 최소 리플레이 버퍼 사이즈
-        epsilon_start=0.5,                      # Epsilon 초기 값
+        target_sync_step_interval=1_000,        # 기존 Q 모델을 타깃 Q 모델로 동기화시키는 step 간격
+        replay_buffer_size=100_000,             # 리플레이 버퍼 사이즈
+        min_buffer_size_for_training=10_000,    # 훈련을 위한 최소 리플레이 버퍼 사이즈
+        epsilon_start=1.0,                      # Epsilon 초기 값
         epsilon_end=0.01,                       # Epsilon 최종 값
         epsilon_scheduled_last_episode=300,     # Epsilon 최종 값으로 스케줄되어지는 마지막 에피소드
-        print_episode_interval=10,              # Episode 통계 출력에 관한 에피소드 간격
-        test_episode_interval=50,               # 테스트를 위한 episode 간격
+        print_episode_interval=1,               # Episode 통계 출력에 관한 에피소드 간격
+        test_episode_interval=5,                # 테스트를 위한 episode 간격
         test_num_episodes=3,                    # 테스트시에 수행하는 에피소드 횟수
-        episode_reward_avg_solved=450,          # 훈련 종료를 위한 테스트 에피소드 리워드의 Average
-        episode_reward_std_solved=10            # 훈련 종료를 위한 테스트 에피소드 리워드의 Standard Deviation
+        episode_reward_avg_solved=3,            # 훈련 종료를 위한 테스트 에피소드 리워드의 Average
+        episode_reward_std_solved=3             # 훈련 종료를 위한 테스트 에피소드 리워드의 Standard Deviation
     )
     dqn.train_loop()
 
