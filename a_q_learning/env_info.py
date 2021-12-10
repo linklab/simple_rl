@@ -1,5 +1,6 @@
 # https://www.deeplearningwizard.com/deep_learning/deep_reinforcement_learning_pytorch/dynamic_programming_frozenlake/
 import gym
+import random
 
 # Environment
 # Slippery environment (stochastic policy, move left probability = 1/3) comes by default!
@@ -84,15 +85,23 @@ def env_info_details():
     print("*" * 80)
 
 
+
+class Dummy_Agent:
+    def get_action(self, observation):
+        available_action_ids = [0, 1, 2, 3]
+        action_id = random.choice(available_action_ids)
+        return action_id
+
 def run_env():
     print("START RUN!!!")
-    # This sets the initial state at S, our starting point
-    # We can render the environment to see where we are on the 4x4 frozenlake gridworld
+    agent = Dummy_Agent()
     observation = env.reset()
     env.render()
 
-    actions = [2, 2, 1, 1, 1, 2]
-    for action in actions:
+    done = False
+
+    while not done:
+        action = agent.get_action(observation)
         next_observation, reward, done, info = env.step(action)
         env.render()
         print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(

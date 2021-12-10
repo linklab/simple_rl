@@ -69,14 +69,11 @@ def q_learning(num_episodes=500, num_test_episodes=7, alpha=0.1, gamma=0.95, eps
         sList = [observation]
 
         episode_step = 0
+        done = False
 
         # The Q-Table 알고리즘
-        while True:
+        while not done:
             episode_step += 1
-            # 가장 Q값이 높은 action을 결정함
-
-            # action = greedy_action(q_table[observation, :])
-
             action = epsilon_greedy_action(q_table[observation, :], epsilon)
 
             # action을 통해서 next_state, reward, done, info를 받아온다
@@ -87,7 +84,6 @@ def q_learning(num_episodes=500, num_test_episodes=7, alpha=0.1, gamma=0.95, eps
             # Q-Learning
             td_error = reward + gamma * np.max(q_table[next_observation, :]) - q_table[observation, action]
             q_table[observation, action] = q_table[observation, action] + alpha * td_error
-            #episode_reward += (gamma ** (episode_step - 1)) * reward
 
             training_time_steps += 1  # Q-table 업데이트 횟수
             episode_reward_list.append(last_episode_reward)
@@ -95,10 +91,7 @@ def q_learning(num_episodes=500, num_test_episodes=7, alpha=0.1, gamma=0.95, eps
             sList.append(next_observation)
             observation = next_observation
 
-            if done:
-                print(sList, done, "GOAL" if done and observation == 15 else "")
-                break
-
+        print(sList, done, "GOAL" if done and observation == 15 else "")
         last_episode_reward = episode_reward
 
         if episode % 10 == 0:
