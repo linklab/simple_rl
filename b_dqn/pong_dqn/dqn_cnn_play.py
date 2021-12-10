@@ -31,10 +31,10 @@ def play(env, q, num_episodes):
 
         while True:
             episode_steps += 1
-            _, gym_action = q.get_action(observation, epsilon=0.0)
+            action = q.get_action(observation, epsilon=0.0)
 
             # action을 통해서 next_state, reward, done, info를 받아온다
-            next_observation, reward, done, _ = env.step(gym_action)
+            next_observation, reward, done, _ = env.step(action)
             env.render()
 
             episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
@@ -55,10 +55,10 @@ def main_q_play(num_episodes):
     env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
 
     obs_shape = env.observation_space.shape
-    n_actions = 3
+    n_actions = env.action_space.n
     q = AtariCNN(obs_shape, n_actions, device=DEVICE).to(DEVICE)
     model_params = torch.load(
-        os.path.join(MODEL_DIR, "dqn_PongNoFrameskip-v4_6.0_1.4.pth")
+        os.path.join(MODEL_DIR, "dqn_PongNoFrameskip-v4_19.7_0.5.pth")
     )
     q.load_state_dict(model_params)
     play(env, q, num_episodes=num_episodes)
