@@ -51,7 +51,7 @@ def epsilon_greedy_action(action_values, epsilon):
         )
 
 
-def q_table_learning(num_episodes=200, alpha=0.1, gamma=0.95, epsilon=0.1):
+def q_learning(num_episodes=500, num_test_episodes=7, alpha=0.1, gamma=0.95, epsilon=0.1):
     # Q-Table 초기화
     q_table = np.zeros([env.observation_space.n, env.action_space.n])
 
@@ -60,12 +60,12 @@ def q_table_learning(num_episodes=200, alpha=0.1, gamma=0.95, epsilon=0.1):
     training_time_steps = 0
     last_episode_reward = 0
 
-    for i in range(num_episodes):
+    for episode in range(num_episodes):
         episode_reward = 0  # cumulative_reward
 
         # Environment 초기화와 변수 초기화
         observation = env.reset()
-        print("EPISODE: {0} - Initial State: {1}".format(i, observation), end=" ")
+        print("EPISODE: {0} - Initial State: {1}".format(episode, observation), end=" ")
         sList = [observation]
 
         episode_step = 0
@@ -82,45 +82,75 @@ def q_table_learning(num_episodes=200, alpha=0.1, gamma=0.95, epsilon=0.1):
             # action을 통해서 next_state, reward, done, info를 받아온다
             next_observation, reward, done, _ = env.step(action)
 
+            episode_reward += reward
+
             # Q-Learning
-            q_table[observation, action] = q_table[observation, action] + alpha * (reward + gamma * np.max(q_table[next_observation, :]) - q_table[observation, action])
+            td_error = reward + gamma * np.max(q_table[next_observation, :]) - q_table[observation, action]
+            q_table[observation, action] = q_table[observation, action] + alpha * td_error
             #episode_reward += (gamma ** (episode_step - 1)) * reward
-            episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
+
             training_time_steps += 1  # Q-table 업데이트 횟수
             episode_reward_list.append(last_episode_reward)
 
             sList.append(next_observation)
             observation = next_observation
 
-            if done or episode_step >= MAX_EPISODE_STEPS:
+            if done:
                 print(sList, done, "GOAL" if done and observation == 15 else "")
                 break
 
         last_episode_reward = episode_reward
 
+        if episode % 10 == 0:
+            episode_reward_list_test, avg_episode_reward_test, std_episode_reward_test = q_learning_testing(
+                num_test_episodes=num_test_episodes, q_table=q_table
+            )
+            print("[TEST RESULTS: {0} Episodes - {1}] Episode Reward Mean: {2:.3f}, Episode Reward Std.: {3:.3f}".format(
+                3, episode_reward_list_test, avg_episode_reward_test, std_episode_reward_test
+            ))
+            if avg_episode_reward_test == 1.0 and std_episode_reward_test == 0.0:
+                print("***** TRAINING DONE!!! *****")
+                break
+
     return q_table, training_time_steps, episode_reward_list
 
 
-def q_table_testing(num_episodes, q_table):
+def q_learning_testing(num_test_episodes, q_table):
     episode_reward_list = []
 
-    for i in range(num_episodes):
+    for episode in range(num_test_episodes):
         episode_reward = 0  # cumulative_reward
+        episode_step = 0
 
-        pass # 숙제
+        observation = env.reset()
+
+        done = False
+        while not done:
+            episode_step += 1
+            action = greedy_action(q_table[observation, :])
+
+            # action을 통해서 next_state, reward, done, info를 받아온다
+            next_observation, reward, done, _ = env.step(action)
+
+            episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
+
+            observation = next_observation
 
         episode_reward_list.append(episode_reward)
 
-    return np.average(episode_reward_list)
+    return episode_reward_list, np.mean(episode_reward_list), np.std(episode_reward_list)
 
 
 def main_q_table_learning():
     NUM_EPISODES = 200
+    NUM_TEST_EPISODES = 7
     ALPHA = 0.1
     GAMMA = 0.95
     EPSILON = 0.1
 
-    q_table, training_time_steps, episode_reward_list = q_table_learning(NUM_EPISODES, ALPHA, GAMMA, EPSILON)
+    q_table, training_time_steps, episode_reward_list = q_learning(
+        NUM_EPISODES, NUM_TEST_EPISODES, ALPHA, GAMMA, EPSILON
+    )
     print("\nFinal Q-Table Values")
     print("    LEFT   DOWN  RIGHT     UP")
     for idx, observation in enumerate(q_table):
