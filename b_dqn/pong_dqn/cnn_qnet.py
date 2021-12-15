@@ -7,8 +7,8 @@ from torch import nn
 
 class AtariCNN(nn.Module):
     def __init__(
-            self, obs_shape: Tuple[int], n_actions: int, hidden_size: int = 256,
-            device=torch.device("cpu")
+            self, obs_shape: Tuple[int], n_actions: int,
+            hidden_size: int = 256, device=torch.device("cpu")
     ):
         super(AtariCNN, self).__init__()
 
@@ -63,3 +63,4 @@ class AtariCNN(nn.Module):
             q_values = self.forward(observation)
             action = torch.argmax(q_values, dim=1)
             return action.item()
+

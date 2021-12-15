@@ -93,7 +93,7 @@ class DQN:
 
         total_train_start_time = time.time()
 
-        test_episode_reward_avg = -21
+        test_episode_reward_avg = 0.0
         test_episode_reward_std = 0.0
 
         is_terminated = False
@@ -165,18 +165,18 @@ class DQN:
 
                     if (n_episode + 1) % self.print_episode_interval == 0:
                         print(
-                            "[Episode {:3}, Steps {:6}]".format(
+                            "[Episode {:3}, Time Steps {:6}]".format(
                                 n_episode + 1, self.time_steps
                             ),
                             "Episode Reward: {:>5},".format(episode_reward),
                             "Mean Episode Reward: {:.3f},".format(mean_episode_reward),
-                            "size of replay buffer: {:>6}".format(
+                            "size of replay buffer: {:>6},".format(
                                 self.replay_buffer.size()
                             ),
-                            "Loss: {:.3f},".format(loss),
-                            "Epsilon: {:.2f},".format(epsilon),
-                            "Num Training Steps: {:4},".format(self.training_time_steps),
-                            "Per-Episode Time: {}".format(per_episode_time),
+                            "Loss: {:6.3f},".format(loss),
+                            "Epsilon: {:4.2f},".format(epsilon),
+                            "Num Training Steps: {:5},".format(self.training_time_steps),
+                            "Per-Episode Time: {},".format(per_episode_time),
                             "Total Elapsed Time {}".format(total_training_time)
                         )
 
@@ -190,7 +190,7 @@ class DQN:
                             "Mean Episode Reward": mean_episode_reward,
                             "Episode": n_episode,
                             "Size of replay buffer": self.replay_buffer.size(),
-                            "Number of Training Steps": self.training_time_steps,
+                            "Number of Training Steps": self.training_time_steps
                         })
 
                     break
@@ -287,17 +287,14 @@ class DQN:
 
 
 def main():
-    # local
     ENV_NAME = "PongNoFrameskip-v4"
 
-    # env
     env = gym.make(ENV_NAME)
     env = gym.wrappers.AtariPreprocessing(
         env, grayscale_obs=True, scale_obs=True
     )
     env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
 
-    # test_env
     test_env = gym.make(ENV_NAME)
     test_env = gym.wrappers.AtariPreprocessing(
         test_env, grayscale_obs=True, scale_obs=True
@@ -331,3 +328,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

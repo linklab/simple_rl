@@ -32,25 +32,22 @@ class ReplayBuffer:
         self.buffer.clear()
 
     def sample(self, batch_size):
-        # Get index
+        # Get random index
         indices = np.random.choice(len(self.buffer), size=batch_size, replace=False)
-
         # Sample
         observations, actions, next_observations, rewards, dones = zip(*[self.buffer[idx] for idx in indices])
 
         # Convert to ndarray for speed up cuda
         observations = np.array(observations)
         next_observations = np.array(next_observations)
-        # observations.shape, next_observations.shape: (64, 4), (64, 4)
+        # observations.shape, next_observations.shape: (32, 4), (32, 4)
 
         actions = np.array(actions)
         actions = np.expand_dims(actions, axis=-1) if actions.ndim == 1 else actions
-
         rewards = np.array(rewards)
         rewards = np.expand_dims(rewards, axis=-1) if rewards.ndim == 1 else rewards
-
         dones = np.array(dones, dtype=bool)
-        # actions.shape, rewards.shape, dones.shape: (64, 1) (64, 1) (64,)
+        # actions.shape, rewards.shape, dones.shape: (32, 1) (32, 1) (32,)
 
         # Convert to tensor
         observations = torch.tensor(observations, dtype=torch.float32, device=self.device)

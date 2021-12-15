@@ -8,8 +8,6 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-import random
-
 import wandb
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -23,20 +21,14 @@ from b_dqn.common import Transition
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-np.set_printoptions(precision=3)
-np.set_printoptions(suppress=True)
-np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
-
 MODEL_DIR = os.path.join(PROJECT_HOME, "b_dqn", "cartpole_dqn", "models")
 if not os.path.exists(MODEL_DIR):
     os.mkdir(MODEL_DIR)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-print(DEVICE)
 
-
-class DQN():
+class DQN:
     def __init__(
             self, env_name, env, test_env, use_wandb, wandb_entity,
             max_num_episodes, batch_size, learning_rate,
@@ -301,7 +293,7 @@ def main():
         env_name=ENV_NAME,
         env=env,
         test_env=test_env,
-        use_wandb=False,                            # WANDB 연결 및 로깅 유무
+        use_wandb=False,                        # WANDB 연결 및 로깅 유무
         wandb_entity="link-koreatech",          # WANDB 개인 계정
         max_num_episodes=1_000,                 # 훈련을 위한 최대 에피소드 횟수
         batch_size=32,                          # 훈련시 배치에서 한번에 가져오는 랜덤 배치 사이즈
@@ -310,7 +302,7 @@ def main():
         target_sync_step_interval=500,          # 기존 Q 모델을 타깃 Q 모델로 동기화시키는 step 간격
         replay_buffer_size=10_000,              # 리플레이 버퍼 사이즈
         min_buffer_size_for_training=100,       # 훈련을 위한 최소 리플레이 버퍼 사이즈
-        epsilon_start=0.5,                      # Epsilon 초기 값
+        epsilon_start=0.7,                      # Epsilon 초기 값
         epsilon_end=0.01,                       # Epsilon 최종 값
         epsilon_scheduled_last_episode=300,     # Epsilon 최종 값으로 스케줄되어지는 마지막 에피소드
         print_episode_interval=10,              # Episode 통계 출력에 관한 에피소드 간격
