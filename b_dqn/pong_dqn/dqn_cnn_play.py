@@ -58,7 +58,8 @@ def main_q_play(num_episodes):
     n_actions = env.action_space.n
     q = AtariCNN(obs_shape, n_actions, device=DEVICE).to(DEVICE)
     model_params = torch.load(
-        os.path.join(MODEL_DIR, "dqn_PongNoFrameskip-v4_19.7_0.5.pth")
+        os.path.join(MODEL_DIR, "dqn_PongNoFrameskip-v4_19.7_0.5.pth"),
+        map_location=torch.device('cpu')
     )
     q.load_state_dict(model_params)
     play(env, q, num_episodes=num_episodes)

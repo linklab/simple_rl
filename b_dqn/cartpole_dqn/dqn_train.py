@@ -259,22 +259,16 @@ class DQN:
 
     def q_testing(self, num_episodes):
         episode_reward_lst = []
-
         for i in range(num_episodes):
             episode_reward = 0  # cumulative_reward
-
             # Environment 초기화와 변수 초기화
             observation = self.test_env.reset()
-
             while True:
                 action = self.q.get_action(observation, epsilon=0.0)
-
                 # action을 통해서 next_state, reward, done, info를 받아온다
                 next_observation, reward, done, _ = self.test_env.step(action)
-
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
                 observation = next_observation
-
                 if done:
                     break
 
@@ -293,7 +287,7 @@ def main():
         env_name=ENV_NAME,
         env=env,
         test_env=test_env,
-        use_wandb=False,                        # WANDB 연결 및 로깅 유무
+        use_wandb=True,                        # WANDB 연결 및 로깅 유무
         wandb_entity="link-koreatech",          # WANDB 개인 계정
         max_num_episodes=1_000,                 # 훈련을 위한 최대 에피소드 횟수
         batch_size=32,                          # 훈련시 배치에서 한번에 가져오는 랜덤 배치 사이즈
@@ -301,7 +295,7 @@ def main():
         gamma=0.99,                             # 감가율
         target_sync_step_interval=500,          # 기존 Q 모델을 타깃 Q 모델로 동기화시키는 step 간격
         replay_buffer_size=10_000,              # 리플레이 버퍼 사이즈
-        min_buffer_size_for_training=100,       # 훈련을 위한 최소 리플레이 버퍼 사이즈
+        min_buffer_size_for_training=1000,       # 훈련을 위한 최소 리플레이 버퍼 사이즈
         epsilon_start=0.7,                      # Epsilon 초기 값
         epsilon_end=0.01,                       # Epsilon 최종 값
         epsilon_scheduled_last_episode=300,     # Epsilon 최종 값으로 스케줄되어지는 마지막 에피소드

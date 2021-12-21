@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import time
+
 import gym
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -70,6 +72,7 @@ def main_env_info():
     actions = ([2] * 3 + [3] * 3) * 500
 
     for action in actions:
+        time.sleep(0.05)
         next_observation, reward, done, info = env.step(action)
         env.render()
         print("Observation: {0}, Action: {1}, Next Observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(
